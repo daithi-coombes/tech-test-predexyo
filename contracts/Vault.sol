@@ -2,9 +2,11 @@
 pragma solidity ^0.8.24;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
+import "hardhat/console.sol";
 
 contract Vault is ERC20, ERC20Burnable, Ownable, ERC20Permit {
 
@@ -32,9 +34,24 @@ contract Vault is ERC20, ERC20Burnable, Ownable, ERC20Permit {
         balancesETH[msg.sender] += msg.value;
     }
 
-    function depositERC20(address token, uint amount) public {
-        require(amount > 0, "Amount must be greater than zero");
-        balancesERC20[msg.sender][token] += amount;
+    function depositERC20(IERC20 token, uint amount) public {
+        require(amount > 0, "Transfer amount must be greater than zero");
+        uint256 _allowance = token.allowance(msg.sender, address(this));
+        require(_allowance >= amount, "Not enough allowance");
+
+        token.transferFrom(msg.sender, address(this), amount);
+
+        balancesERC20[msg.sender][address(token)] += amount;
+    }
+
+    function withdrawERC20(IERC20 token, uint amount) public {
+        require(amount > 0, "Transfer amount must be greater than zero");
+        require(balancesERC20[msg.sender][address(token)] >= amount, "Not enough ERC20 in vault");
+
+        token.approve(msg.sender, amount);
+        token.transferFrom(address(this), msg.sender, amount);
+
+        balancesERC20[msg.sender][address(token)] -= amount;
     }
 
     function withdrawETH(uint amount) public {
