@@ -1,22 +1,35 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.24;
 
-contract Vault {
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
 
-    mapping(address => uint) public balancesEth;
+contract Vault is ERC20, ERC20Burnable, Ownable, ERC20Permit {
+
+    mapping(address => uint) public balancesETH;
     mapping(address => uint) public ERC20Deposits;
     mapping(address => mapping(address => uint)) public balancesERC20;  // @dev: expensive
 
+    constructor(address Owner)
+        ERC20("WrappedETH", "wETH") Ownable(Owner) ERC20Permit("WrappedETH")
+    {}
+
+    function mint(address to, uint256 amount) public onlyOwner {
+        _mint(to, amount);
+    }
+
     function getBalanceETH(address user) public view returns(uint) {
-        return balancesEth[user];
+        return balancesETH[user];
     }
 
     function getBalanceERC20(address user, address token) public view returns(uint) {
         return balancesERC20[user][token];
     }
 
-    function depositEth() payable public {
-        balancesEth[msg.sender] += msg.value;
+    function depositETH() payable public {
+        balancesETH[msg.sender] += msg.value;
     }
 
     function depositERC20(address token, uint amount) public {
@@ -25,15 +38,30 @@ contract Vault {
     }
 
     function withdrawETH(uint amount) public {
-        uint _balance = balancesEth[msg.sender];
+        uint _balance = balancesETH[msg.sender];
         require(_balance >= amount, "Insufficient ETH balance");
 
-        balancesEth[msg.sender] = 0;
+        balancesETH[msg.sender] = 0;
         (bool success,) = payable(msg.sender).call{value: _balance}("");
         require(success, "ETH withdraw failed");
 
         if (!success) {
-            balancesEth[msg.sender] = _balance;
+            balancesETH[msg.sender] = _balance;
         }
+    }
+
+    function wrapETH(uint amount) public {
+        uint _ethBalance = balancesETH[msg.sender];
+        require(_ethBalance > amount, "Not enough ETH to wrap");
+
+        _mint(msg.sender, amount);
+        balancesETH[msg.sender] -= amount;
+    }
+
+    function unwrapwETH(uint amount) public {
+        require(balanceOf(msg.sender) >= amount, "Insufficient wETH balance");
+
+        _burn(msg.sender, amount);
+        balancesETH[msg.sender] += amount;
     }
 }

@@ -35,5 +35,5 @@ npx hardhat test
 
 ### Static Analysis
 ```
-docker run -v $(pwd):/tmp mythril/myth analyze /tmp/contracts/Vault.sol
+docker run -v $(pwd):/tmp mythril/myth analyze /tmp/contracts/Vault.sol --solc-json /tmp/mythril.json
 ```
