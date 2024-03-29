@@ -73,7 +73,7 @@ describe('Vault', () => {
     })
 
     it('will not wrap if not enough ETH held in Vault', async () => {
-      const { owner, vault: underTest } = await loadFixture(deployVault)
+      const { vault: underTest } = await loadFixture(deployVault)
 
       await underTest.write.depositETH({value: parseEther('0.5')})
       await expect(underTest.write.wrapETH([parseEther('1')]))
