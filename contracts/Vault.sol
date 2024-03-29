@@ -23,4 +23,17 @@ contract Vault {
         require(amount > 0, "Amount must be greater than zero");
         balancesERC20[msg.sender][token] += amount;
     }
+
+    function withdrawETH(uint amount) public {
+        uint _balance = balancesEth[msg.sender];
+        require(_balance >= amount, "Insufficient ETH balance");
+
+        balancesEth[msg.sender] = 0;
+        (bool success,) = payable(msg.sender).call{value: _balance}("");
+        require(success, "ETH withdraw failed");
+
+        if (!success) {
+            balancesEth[msg.sender] = _balance;
+        }
+    }
 }

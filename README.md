@@ -16,6 +16,8 @@ You should take into consideration relevant best practices for security and gas 
 Always use industry standards with smart contracts, namely due to their immutability. Things missing from this project that would be in production ready code:
  - Upgradable Proxies
  - Openzeppelin
+ - linting
+ - environments (dev, test & prod as needed)
 
 Project is vanilla solidity for the tech test only. DO NOT USE IN PRODUCTION
 
