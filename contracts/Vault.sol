@@ -48,13 +48,12 @@ contract Vault is ERC20, ERC20Burnable, Ownable, ERC20Permit {
         require(amount > 0, "Transfer amount must be greater than zero");
         require(balancesERC20[msg.sender][address(token)] >= amount, "Not enough ERC20 in vault");
 
-        token.approve(msg.sender, amount);
-        token.transferFrom(address(this), msg.sender, amount);
+        token.transfer(msg.sender, amount);
 
         balancesERC20[msg.sender][address(token)] -= amount;
     }
 
-    function withdrawETH(uint amount) public {
+   function withdrawETH(uint amount) public {
         uint _balance = balancesETH[msg.sender];
         require(_balance >= amount, "Insufficient ETH balance");
 

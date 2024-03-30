@@ -52,7 +52,7 @@ describe('Vault', () => {
     })
   })
 
-  describe.only('ERC20 Deposit & Withdrawal', () => {
+  describe('ERC20 Deposit & Withdrawal', () => {
     it('will deposit', async () => {
       const { account, mockERC20, vault:underTest} = await loadFixture(deployVault)
 
@@ -70,28 +70,29 @@ describe('Vault', () => {
     })
 
     it('will withdraw', async () => {
-      // approve transfer from vault to msg.sender
       const { account, mockERC20, vault:underTest} = await loadFixture(deployVault)
 
       await mockERC20.write.approve([underTest.address, parseEther('1')], {account: account.account.address})
       await underTest.write.depositERC20([mockERC20.address, parseEther('1')], {account: account.account.address})
-      const balanceVault = await underTest.read.getBalanceERC20([account.account.address, mockERC20.address])
-      console.log('user vault balance: ', balanceVault)
-      const balanceVaultERC20 = await mockERC20.read.balanceOf([underTest.address])
-      console.log('balanceVaultERC20: ', balanceVaultERC20)
-
       await underTest.write.withdrawERC20([mockERC20.address, parseEther('1')], {account: account.account.address})
 
-      // const balanceVault = await underTest.read.getBalanceERC20([account.account.address, mockERC20.address])
-      const balanceERC20 = await mockERC20.read.balanceOf([underTest.address])
+      const balanceVaultActual = await mockERC20.read.balanceOf([underTest.address])
+      const balanceUserActual = await mockERC20.read.balanceOf([account.account.address])
+      const userVaultActual = await underTest.read.getBalanceERC20([account.account.address, mockERC20.address])
 
-      expect(balanceERC20).to.be.equal(parseEther('0'))
-      expect(balanceVault).to.be.equal(parseEther('0'))
-
-      // update local state (balances20)
-      // transfer to msg.sender
+      expect(balanceUserActual).to.be.equal(parseEther('1'))
+      expect(balanceVaultActual).to.be.equal(parseEther('0'))
+      expect(userVaultActual).to.be.equal(parseEther('0'))
     })
-    it.skip('will not withdraw if not enough funds', () => {})
+
+    it('will not withdraw if not enough funds', async () => {
+      const { account, mockERC20, vault:underTest} = await loadFixture(deployVault)
+
+      await mockERC20.write.approve([underTest.address, parseEther('0.5')], {account: account.account.address})
+      await underTest.write.depositERC20([mockERC20.address, parseEther('0.5')], {account: account.account.address})
+      await expect(underTest.write.withdrawERC20([mockERC20.address, parseEther('1')], {account: account.account.address}))
+      .to.rejectedWith('Not enough ERC20 in vault')
+    })
   })
 
   describe('Wrap & Unwrap ETH', () => {
